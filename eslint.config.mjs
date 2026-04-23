@@ -26,7 +26,9 @@ const browserGlobals = {
 };
 
 export default [
-  eslint.configs.recommended,
+  {
+    ignores: ['dist/', 'playwright-report/', 'test-results/', 'node_modules/'],
+  },
   {
     files: ['**/*.ts'],
     languageOptions: {
@@ -41,16 +43,14 @@ export default [
       '@typescript-eslint': tseslint,
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
       'no-var': 'error',
       'no-undef': 'off',
     },
-  },
-  {
-    ignores: ['dist/', 'playwright-report/', 'test-results/', 'node_modules/'],
   },
 ];
