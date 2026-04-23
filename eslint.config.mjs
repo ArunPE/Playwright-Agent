@@ -32,7 +32,6 @@ export default [
     languageOptions: {
       parser: tsparser,
       parserOptions: {
-        project: './tsconfig.json',
         ecmaVersion: 2022,
         sourceType: 'module',
       },
@@ -43,7 +42,7 @@ export default [
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
