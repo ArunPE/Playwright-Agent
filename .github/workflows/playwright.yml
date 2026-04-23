@@ -33,6 +33,11 @@ env:
   ENV: ${{ github.event.inputs.environment || 'staging' }}
   NODE_VERSION: '20'
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   # ── Job 1: Lint + Type Check ───────────────────────────────────
   quality:
@@ -188,17 +193,13 @@ jobs:
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
-          name: full-test-report-${{ github.run_id }}
+          name: github-pages
           path: playwright-report/
           retention-days: 30
 
       - name: Publish to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: actions/deploy-pages@v4
         if: github.ref == 'refs/heads/main'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: playwright-report
-          destination_dir: reports/${{ github.run_id }}
 
   # ── Job 5: Notify on failure ───────────────────────────────────
   notify:
