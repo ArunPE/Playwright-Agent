@@ -36,13 +36,13 @@ export class BaseApiClient {
 
   constructor(request: APIRequestContext, baseURL?: string) {
     this.request = request;
-    this.baseURL = baseURL || process.env.API_BASE_URL || 'http://localhost:3001/api';
+    this.baseURL = baseURL || (process.env.API_BASE_URL && process.env.API_BASE_URL !== '' ? process.env.API_BASE_URL : 'http://localhost:3001/api');
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
 
-    if (process.env.API_KEY && process.env.API_KEY !== '') {
+    if (process.env.API_KEY && process.env.API_KEY.trim() !== '') {
       this.defaultHeaders['x-api-key'] = process.env.API_KEY;
     }
   }
