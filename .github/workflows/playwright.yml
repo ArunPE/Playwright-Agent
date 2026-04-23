@@ -200,9 +200,10 @@ jobs:
             playwright-report/data
           retention-days: 30
 
-      - name: Publish to GitHub Pages
-        uses: actions/deploy-pages@v4
-        if: github.ref == 'refs/heads/main'
+      # GitHub Pages deployment temporarily disabled
+      # - name: Publish to GitHub Pages
+      #   uses: actions/deploy-pages@v4
+      #   if: github.ref == 'refs/heads/main'
 
   # ── Job 5: Notify on failure ───────────────────────────────────
   notify:
