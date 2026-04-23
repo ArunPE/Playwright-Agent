@@ -1,0 +1,216 @@
+name: Playwright Automation Agent
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run full regression nightly at 2 AM IST (8:30 PM UTC)
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [dev, staging, prod]
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options: [smoke, regression, all]
+      browser:
+        description: 'Browser'
+        required: false
+        default: 'chromium'
+        type: choice
+        options: [chromium, firefox, webkit, all]
+
+env:
+  ENV: ${{ github.event.inputs.environment || 'staging' }}
+  NODE_VERSION: '20'
+
+jobs:
+  # ── Job 1: Lint + Type Check ───────────────────────────────────
+  quality:
+    name: 'Code Quality'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+  # ── Job 2: API Tests ───────────────────────────────────────────
+  api-tests:
+    name: 'API Tests'
+    runs-on: ubuntu-latest
+    needs: quality
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright (chromium only for API)
+        run: npx playwright install chromium --with-deps
+
+      - name: Run API tests
+        run: npx playwright test tests/api/ --project=api --reporter=github,html
+        env:
+          ENV: ${{ env.ENV }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+
+      - name: Upload API test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-report
+          path: playwright-report/
+          retention-days: 14
+
+  # ── Job 3: UI Tests (Matrix across browsers) ───────────────────
+  ui-tests:
+    name: 'UI Tests (${{ matrix.browser }})'
+    runs-on: ubuntu-latest
+    needs: quality
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: ${{ github.event.inputs.browser == 'all' && fromJSON('["chromium","firefox","webkit"]') || fromJSON(format('["{0}"]', github.event.inputs.browser || 'chromium')) }}
+        shard: [1, 2, 3, 4]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install ${{ matrix.browser }} --with-deps
+
+      - name: Run UI tests (shard ${{ matrix.shard }}/4)
+        run: |
+          GREP_FLAG=""
+          if [ "${{ github.event.inputs.test_suite }}" = "smoke" ]; then
+            GREP_FLAG="--grep @smoke"
+          elif [ "${{ github.event.inputs.test_suite }}" = "regression" ]; then
+            GREP_FLAG="--grep @regression"
+          fi
+          npx playwright test tests/ui/ \
+            --project=${{ matrix.browser }} \
+            --shard=${{ matrix.shard }}/4 \
+            --reporter=github,blob \
+            $GREP_FLAG
+        env:
+          ENV: ${{ env.ENV }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          AUTH_USERNAME: ${{ secrets.AUTH_USERNAME }}
+          AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
+
+      - name: Upload blob report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blob-report-${{ matrix.browser }}-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 1
+
+  # ── Job 4: Merge Reports ───────────────────────────────────────
+  merge-reports:
+    name: 'Merge & Publish Reports'
+    runs-on: ubuntu-latest
+    needs: [api-tests, ui-tests]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download all blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge into HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-test-report-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playwright-report
+          destination_dir: reports/${{ github.run_id }}
+
+  # ── Job 5: Notify on failure ───────────────────────────────────
+  notify:
+    name: 'Notify on Failure'
+    runs-on: ubuntu-latest
+    needs: [api-tests, ui-tests]
+    if: failure()
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "❌ Automation Tests FAILED on `${{ github.ref_name }}`",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  { "title": "Run", "value": "${{ github.run_id }}", "short": true },
+                  { "title": "Environment", "value": "${{ env.ENV }}", "short": true },
+                  { "title": "Triggered by", "value": "${{ github.actor }}", "short": true }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

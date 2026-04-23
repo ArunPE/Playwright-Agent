@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(dir *)",
+      "Bash(npx playwright *)",
+      "WebSearch",
+      "Bash(npm test *)",
+      "Bash(C:/Users/arunk/AppData/Local/npm/node_modules/npx-cli/bin/npx.cmd test *)",
+      "Bash(npx tsc *)",
+      "Bash(where git *)",
+      "Bash(git init *)"
+    ]
+  }
+}
