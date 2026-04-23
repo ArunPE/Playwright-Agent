@@ -5,6 +5,14 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, `.env.${process.env.ENV || 'dev'}`) });
 
 export default defineConfig({
+  // ── Web Server ───────────────────────────────────────────────────
+  webServer: {
+    command: 'node server/index.js',
+    port: 3000,
+    timeout: 30_000,
+    reuseExistingServer: !process.env.CI,
+  },
+
   // ── Test Discovery ──────────────────────────────────────────────
   testDir: './tests',
   testMatch: '**/*.spec.ts',
@@ -68,6 +76,24 @@ export default defineConfig({
         browserName: 'chromium',
       },
       testMatch: ['**/api/**/*.spec.ts', '**/hybrid/**/*.spec.ts'],
+    },
+
+    // Shop API tests
+    {
+      name: 'shop-api',
+      use: {
+        baseURL: 'http://localhost:3000',
+      },
+      testMatch: ['**/api/shop.spec.ts'],
+    },
+
+    // Shop UI tests
+    {
+      name: 'shop-ui',
+      use: {
+        baseURL: 'http://localhost:3000',
+      },
+      testMatch: ['**/ui/shop-ui.spec.ts'],
     },
   ],
 
