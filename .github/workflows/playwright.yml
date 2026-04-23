@@ -86,8 +86,8 @@ jobs:
         run: npx playwright test tests/api/ --project=api --reporter=github,html
         env:
           ENV: ${{ env.ENV }}
-          API_BASE_URL: ''
-          API_KEY: ''
+          API_BASE_URL: https://reqres.in/api
+          API_KEY: pro_3bde23bfed674a1bd23573945a36147059f9a9e332a157c4cbbec9d6d4e013db
 
       - name: Upload API test report
         uses: actions/upload-artifact@v4

@@ -1,4 +1,4 @@
-import { test, expect } from '../../src/fixtures';
+import { test, expect } from '@playwright/test';
 import { ReqResApi } from '../../src/api/reqres.api';
 
 /**
@@ -13,6 +13,7 @@ test.describe('ReqRes API — Users', () => {
   let api: ReqResApi;
 
   test.beforeEach(async ({ request }) => {
+    // Use fresh request context to avoid any inherited state
     api = new ReqResApi(request);
   });
 
