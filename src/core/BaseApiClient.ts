@@ -42,7 +42,7 @@ export class BaseApiClient {
       Accept: 'application/json',
     };
 
-    if (process.env.API_KEY) {
+    if (process.env.API_KEY && process.env.API_KEY !== '') {
       this.defaultHeaders['x-api-key'] = process.env.API_KEY;
     }
   }

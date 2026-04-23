@@ -66,10 +66,8 @@ export default defineConfig({
       name: 'api',
       use: {
         browserName: 'chromium',
-        storageState: 'playwright/.auth/user.json',
       },
       testMatch: ['**/api/**/*.spec.ts', '**/hybrid/**/*.spec.ts'],
-      dependencies: ['setup'],
     },
   ],
 
