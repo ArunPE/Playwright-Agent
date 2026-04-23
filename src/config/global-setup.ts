@@ -5,7 +5,7 @@ import { logger } from '../utils/logger';
 
 const AUTH_FILE = 'playwright/.auth/user.json';
 
-async function globalSetup(_config: FullConfig) {
+async function globalSetup(_config: FullConfig): Promise<void> {
   logger.info('🚀 Global Setup: Starting...');
 
   const authDir = path.dirname(AUTH_FILE);
@@ -36,7 +36,7 @@ async function globalSetup(_config: FullConfig) {
 
     await context.storageState({ path: AUTH_FILE });
     logger.info('✅ Auth state cached — tests will skip login');
-  } catch (error) {
+  } catch {
     logger.warn('⚠️  Auth setup failed — writing empty state');
     fs.writeFileSync(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
   } finally {

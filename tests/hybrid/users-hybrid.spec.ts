@@ -25,7 +25,7 @@ test.describe('Hybrid: API + UI — Sauce Demo + ReqRes', () => {
     expect(productCount).toBeGreaterThan(0);
 
     // Cross-assert: both systems are up and returning data
-    console.log(`✅ ReqRes: ${users.total} users | Sauce Demo: ${productCount} products`);
+    console.warn(`✅ ReqRes: ${users.total} users | Sauce Demo: ${productCount} products`);
   });
 
   test('@regression - API create + verify response shape is consistent across calls', async ({ request }) => {
@@ -89,7 +89,7 @@ test.describe('Hybrid: API + UI — Sauce Demo + ReqRes', () => {
     }
 
     const avg = timings.reduce((a, b) => a + b, 0) / timings.length;
-    console.log(`📊 ReqRes avg response time: ${avg.toFixed(0)}ms`);
+    console.warn(`📊 ReqRes avg response time: ${avg.toFixed(0)}ms`);
     expect(avg).toBeLessThan(3000);
   });
 });

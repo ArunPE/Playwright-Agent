@@ -5,7 +5,7 @@ interface RetryOptions {
   delay?: number;
   exponential?: boolean;
   label?: string;
-  onRetry?: (attempt: number, error: Error) => void;
+  onRetry?: (attempt: number, _error: Error) => void;
 }
 
 /**

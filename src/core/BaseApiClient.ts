@@ -1,5 +1,5 @@
 import { APIRequestContext, APIResponse, expect } from '@playwright/test';
-import { z, ZodSchema } from 'zod';
+import { ZodSchema } from 'zod';
 import { logger } from '../utils/logger';
 import { retry } from '../utils/retry';
 
