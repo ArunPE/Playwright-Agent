@@ -35,7 +35,7 @@ export const test = base.extend<AgentFixtures>({
   /**
    * factory — Test data factory (static class, no teardown needed).
    */
-  factory: async (_fixture, use) => {
+  factory: async ({}, use) => {
     await use(TestDataFactory);
   },
 
