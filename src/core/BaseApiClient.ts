@@ -106,6 +106,7 @@ export class BaseApiClient {
     const mergedHeaders = { ...this.defaultHeaders, ...headers };
 
     logger.info(`📡 ${method} ${url}`);
+    logger.debug(`   Headers: ${JSON.stringify(mergedHeaders)}`);
     if (body) logger.debug(`   Body: ${JSON.stringify(body)}`);
 
     const start = Date.now();
